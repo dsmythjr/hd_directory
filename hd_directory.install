@@ -1,0 +1,98 @@
+<?php
+
+/**
+ * @file
+ * hd_directory_install
+ */  
+  
+
+include_once 'includes/fields.inc';
+
+
+  
+
+/**
+  * Implement hook_enable()
+  */
+function hd_directory_enable() {
+  drupal_set_message($message = t('The HD Directory module was successfully enabled.'), $type = 'status');
+
+  // Install fields
+  $field_bases = get_directory_field_bases();
+  foreach($field_bases as $field) {
+    if (!field_info_field($field['field_name'])) {
+      field_create_field($field);    
+    }
+  }
+  
+  // Attach new fields to correct content types etc...
+  $field_instances = get_directory_field_instances();
+  foreach($field_instances as $instance) {
+    
+    if($instance['bundle'] == 'person' ) {
+      if (!field_info_instance('node', $instance['field_name'], 'person')) {        
+        field_create_instance($instance);    
+      }      
+    }
+    if($instance['bundle'] == 'page' ) {
+      if (!field_info_instance('node', $instance['field_name'], 'page')) {        
+        field_create_instance($instance);    
+      }      
+    }    
+  }
+  
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'page')
+    ->propertyCondition('status', 1)
+    ->fieldCondition('title_field', 'value', 'Directory', '=')
+    ->addMetaData('account', user_load(1));
+  
+  $result = $query->execute();
+  if (!isset($result['node'])) {
+    global $user;
+    $node = new stdClass();
+    $node->title = "Directory";
+    $node->type = "page";
+    node_object_prepare($node); // Sets some defaults. Invokes hook_prepare() and hook_node_prepare().
+    $node->language = LANGUAGE_NONE; // Or e.g. 'en' if locale is enabled
+    $node->uid = $user->uid; 
+    $node->status = 1; //(1 or 0): published or not
+    $node->promote = 0; //(1 or 0): promoted to front page
+    $node->comment = 0; // 0 = comments disabled, 1 = read only, 2 = read/write
+    $node->field_view[LANGUAGE_NONE][0]['vname'] = 'directory|page';
+    $node = node_submit($node); // Prepare node for saving
+    node_save($node);
+  }
+  
+  hd_directory_variable_set();
+}
+
+/**
+ * Implements hook_node_info().
+ */
+function hd_directory_node_info() {
+  $items = array(
+    'person' => array(
+      'name' => t('Person'),
+      'base' => 'node_content',
+      'description' => t('Show People that can be used in a directory'),
+      'has_title' => '1',
+      'title_label' => t('Title'),
+      'help' => '',
+      'custom' => TRUE,
+    ),
+  );
+  drupal_alter('node_info', $items);
+  return $items;
+}
+
+function hd_directory_variable_set() {
+  
+  $items = hd_directory_strongarm();
+  
+  foreach($items as $name => $value) {
+    variable_set($value->name, $value->value);
+  }
+    
+}

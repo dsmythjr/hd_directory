@@ -1,0 +1,204 @@
+<?php
+
+/**
+ * @file
+ * hd Directory Code
+ */
+
+include_once 'hd_directory.strongarm.inc';
+drupal_add_css(drupal_get_path('module', 'hd_directory') . '/css/hd_directory.css');
+/**
+* Implements hook_views_api().
+*
+* Enabling using templates inside module
+*/
+function hd_directory_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'hd_directory'),
+    'template path' => drupal_get_path('module', 'hd_directory') . '/templates',
+  );
+}
+
+
+/**
+ * Implements hook_ctools_plugin_api().
+ */
+function hd_directory_ctools_plugin_api($module = NULL, $api = NULL) {
+  if ($module == "field_group" && $api == "field_group") {
+    return array("version" => "1");
+  }
+  if ($module == "strongarm" && $api == "strongarm") {
+    return array("version" => "1");
+  }
+}
+
+/**
+ * THEME_PREPROCESS_VIEWS_VIEW
+ * @param type $vars
+ * 
+ */
+function hd_directory_preprocess_views_view(&$vars) {
+
+  if ($vars['view']->name == 'directory') {
+    // get var from GET
+    
+    $uri_parts = explode('?', $_SERVER['REQUEST_URI'], 2);
+    $parts = explode('/', $uri_parts[0]);
+    if(array_key_exists(2,$parts)) {
+      $vars['view']->build_info['title'] = 'Directory - ' . $parts[2];
+    }
+    if (empty($vars['view']->exposed_input) && ($vars['view']->current_display == 'page')) {
+      if (empty($vars['view']->args)) {
+        //if (!in_array($vars['view']->args[0], $letters)) {
+          $vars['rows'] = array();
+          $empty_text = $vars['view']->empty;
+          $vars['empty'] = $empty_text['area']->options['content'];
+        //}
+      }
+    }
+
+  }
+}
+
+/**
+ * Implements hook_image_default_styles().
+ */
+function hd_directory_image_default_styles() {
+  $styles = array();
+
+  // Exported image style: person_portrait_185_x_260.
+  $styles['person_portrait_185x260'] = array(
+    'label' => 'Person Portrait 185 x 260',
+    'effects' => array(
+      20 => array(
+        'name' => 'image_scale_and_crop',
+        'data' => array(
+          'width' => 185,
+          'height' => 260,
+        ),
+        'weight' => 1,
+      ),
+    ),
+  );
+
+  return $styles;
+}
+
+
+
+/**
+ * Implements hook_field_group_info().
+ */
+function hd_directory_field_group_info() {
+  $field_groups = array();
+
+  $field_group = new stdClass();
+  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+  $field_group->api_version = 1;
+  $field_group->identifier = 'group_outer_wrapper|node|person|default';
+  $field_group->group_name = 'group_outer_wrapper';
+  $field_group->entity_type = 'node';
+  $field_group->bundle = 'person';
+  $field_group->mode = 'default';
+  $field_group->parent_name = '';
+  $field_group->data = array(
+    'label' => 'Outer Wrapper',
+    'weight' => '0',
+    'children' => array(
+      0 => 'group_top_wrapper',
+    ),
+    'format_type' => 'div',
+    'format_settings' => array(
+      'label' => 'Outer Wrapper',
+      'instance_settings' => array(
+        'id' => '',
+        'classes' => 'group-outer-wrapper field-group-div',
+        'description' => '',
+        'show_label' => '0',
+        'label_element' => 'h3',
+        'effect' => 'none',
+        'speed' => 'fast',
+      ),
+      'formatter' => 'open',
+    ),
+  );
+  $field_groups['group_outer_wrapper|node|person|default'] = $field_group;
+
+  $field_group = new stdClass();
+  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+  $field_group->api_version = 1;
+  $field_group->identifier = 'group_top_wrapper|node|person|default';
+  $field_group->group_name = 'group_top_wrapper';
+  $field_group->entity_type = 'node';
+  $field_group->bundle = 'person';
+  $field_group->mode = 'default';
+  $field_group->parent_name = 'group_outer_wrapper';
+  $field_group->data = array(
+    'label' => 'Top Wrapper',
+    'weight' => '12',
+    'children' => array(
+      0 => 'field_office',
+      1 => 'field_phone',
+      2 => 'field_image',
+      3 => 'field_email',
+      4 => 'opening_hours_week',
+    ),
+    'format_type' => 'div',
+    'format_settings' => array(
+      'label' => 'Top Wrapper',
+      'instance_settings' => array(
+        'id' => '',
+        'classes' => 'group-top-wrapper field-group-div',
+        'description' => '',
+        'show_label' => '0',
+        'label_element' => 'h3',
+        'effect' => 'none',
+        'speed' => 'fast',
+      ),
+      'formatter' => 'open',
+    ),
+  );
+  $field_groups['group_top_wrapper|node|person|default'] = $field_group;
+
+  $field_group = new stdClass();
+  $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
+  $field_group->api_version = 1;
+  $field_group->identifier = 'group_wrapper|node|person|default';
+  $field_group->group_name = 'group_wrapper';
+  $field_group->entity_type = 'node';
+  $field_group->bundle = 'person';
+  $field_group->mode = 'default';
+  $field_group->parent_name = '';
+  $field_group->data = array(
+    'label' => 'Wrapper',
+    'weight' => '23',
+    'children' => array(
+      0 => 'body',
+      1 => 'field_position',
+      2 => 'field_academic_history',
+    ),
+    'format_type' => 'div',
+    'format_settings' => array(
+      'formatter' => 'collapsible',
+      'instance_settings' => array(
+        'description' => '',
+        'show_label' => 1,
+        'label_element' => 'h3',
+        'effect' => 'none',
+        'speed' => 'fast',
+        'classes' => 'group-wrapper field-group-div',
+        'id' => '',
+      ),
+    ),
+  );
+  $field_groups['group_wrapper|node|person|default'] = $field_group;
+
+  // Translatables
+  // Included for use with string extractors like potx.
+  t('Outer Wrapper');
+  t('Top Wrapper');
+  t('Wrapper');
+
+  return $field_groups;
+}
